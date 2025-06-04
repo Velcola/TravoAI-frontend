@@ -4,8 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plane, Hotel, Clock, MapPin, Users, Star, ArrowLeft, Wifi, Car, Coffee } from "lucide-react";
+import { IconFileNeutralFilled } from "@tabler/icons-react";
 
 const API_URL = "http://localhost:3000";
+
+interface FlightOffer {
+
+}
 
 const SearchResults = () => {
   const [loading, setLoading] = useState(true);
@@ -102,6 +107,7 @@ const SearchResults = () => {
     }
   ];
 
+  const [flightOffers, setFlightOffers] = useState<any[]>([]);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -121,9 +127,11 @@ const SearchResults = () => {
 
             response = await fetch(`${API_URL}/flights?${queryParams.toString()}`, { method: 'GET', })
               .then(data => data.json());
-            console.log('====================================');
-            console.log(response);
-            console.log('====================================');
+            
+              setFlightOffers(response)
+              console.log('====================================');
+              console.log(flightOffers);
+              console.log('====================================');
             break;
           case "hotels":
             break;
@@ -158,6 +166,18 @@ const SearchResults = () => {
         </div>
       </div>
     );
+  }
+
+  function formatDuration(isoDuration) {
+    const regex = /PT(?:(\d+)H)?(?:(\d+)M)?/;
+    const matches = isoDuration.match(regex);
+
+    if (!matches) return isoDuration; // fallback if format unexpected
+
+    const hours = matches[1] ? `${matches[1]}h` : "";
+    const minutes = matches[2] ? ` ${matches[2]}m` : "";
+
+    return (hours + minutes).trim();
   }
 
   return (
@@ -197,57 +217,105 @@ const SearchResults = () => {
         {/* Results */}
         <div className="space-y-6">
           {searchType === "flights" ? (
-            mockFlights.map((flight) => (
-              <Card key={flight.id} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl rounded-2xl transition-all duration-300 hover:scale-[1.02]">
+            flightOffers.map((offer) => (
+              <Card
+                key={offer.id}
+                className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl rounded-2xl transition-all duration-300 hover:scale-[1.02]"
+              >
                 <CardContent className="p-6">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                     <div className="flex-1">
+                      {/* Airline Info */}
                       <div className="flex items-center gap-4 mb-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
                           <Plane className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg text-gray-900">{flight.airline}</h3>
+                          <h3 className="font-semibold text-lg text-gray-900">Airline</h3>
                           <div className="flex items-center gap-2">
                             <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                            <span className="text-sm text-gray-600">{flight.rating}</span>
+                            <span className="text-sm text-gray-600">0.0</span>
                           </div>
                         </div>
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <div className="flex items-center gap-2 text-gray-600 mb-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>Departure</span>
+
+                      {/* Itinerary Info */}
+                      <div className="flex flex-col gap-6">
+                        {offer.itineraries.map((itinerary, index) => (
+                          <div key={index} className="space-y-4">
+                            <div className="text-sm text-gray-500">Duration: {formatDuration(itinerary.duration)}</div>
+                            {itinerary.segments.map((segment, segIndex) => (
+                              <div
+                                key={segIndex}
+                                className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm border border-gray-200 p-4 rounded-xl"
+                              >
+                                {/* Departure */}
+                                <div>
+                                  <div className="flex items-center gap-2 text-gray-600 mb-1">
+                                    <MapPin className="w-4 h-4" />
+                                    <span>Departure</span>
+                                  </div>
+                                  <div className="font-semibold">
+                                    {new Date(segment.departure.at).toLocaleString("en-GB", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      hour12: false,
+                                    })}
+                                  </div>
+                                  <div className="text-gray-600">
+                                    {segment.departure.iataCode}
+                                    {segment.departure.terminal && ` (Terminal ${segment.departure.terminal})`}
+                                  </div>
+                                </div>
+
+                                {/* Flight Info */}
+                                <div className="text-center">
+                                  <div className="flex items-center justify-center gap-2 text-gray-600 mb-1">
+                                    <Plane className="w-4 h-4" />
+                                    <span>{segment.carrierCode} {segment.flightNumber}</span>
+                                  </div>
+                                  <div className="text-xs text-gray-500">{segment.duration.replace("PT", "")}</div>
+                                  <div className="text-xs text-gray-500">{segment.numberOfStops} stops</div>
+                                </div>
+
+                                {/* Arrival */}
+                                <div>
+                                  <div className="flex items-center gap-2 text-gray-600 mb-1">
+                                    <MapPin className="w-4 h-4" />
+                                    <span>Arrival</span>
+                                  </div>
+                                  <div className="font-semibold">
+                                    {new Date(segment.arrival.at).toLocaleString("en-GB", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      hour12: false,
+                                    })}
+                                  </div>
+                                  <div className="text-gray-600">
+                                    {segment.arrival.iataCode}
+                                    {segment.arrival.terminal && ` (Terminal ${segment.arrival.terminal})`}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                          <div className="font-semibold">{flight.departureTime}</div>
-                          <div className="text-gray-600">{flight.departure}</div>
-                        </div>
-                        
-                        <div className="text-center">
-                          <div className="flex items-center gap-2 text-gray-600 mb-1 justify-center">
-                            <Clock className="w-4 h-4" />
-                            <span>{flight.duration}</span>
-                          </div>
-                          <div className="text-xs text-gray-500">{flight.stops}</div>
-                        </div>
-                        
-                        <div>
-                          <div className="flex items-center gap-2 text-gray-600 mb-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>Arrival</span>
-                          </div>
-                          <div className="font-semibold">{flight.arrivalTime}</div>
-                          <div className="text-gray-600">{flight.arrival}</div>
-                        </div>
+                        ))}
                       </div>
                     </div>
-                    
-                    <div className="text-center lg:text-right">
-                      <div className="text-3xl font-bold text-purple-600 mb-2">${flight.price}</div>
-                      <div className="text-sm text-gray-600 mb-4">per person</div>
-                      <Button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl px-6">
+
+                    {/* Price & CTA */}
+                    <div className="text-center lg:text-right shrink-0 w-full lg:w-auto flex flex-col justify-center items-center lg:items-end gap-2 p-4 rounded-xl bg-white/50 shadow-sm">
+                      <div className="text-3xl font-bold text-purple-600 mb-1">
+                        ${offer.price.total} {offer.price.currency}
+                      </div>
+                      <div className="text-sm text-gray-600 mb-3">per person</div>
+                      <Button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl px-6 py-2 w-full lg:w-auto max-w-[200px]">
                         Select Flight
                       </Button>
                     </div>
