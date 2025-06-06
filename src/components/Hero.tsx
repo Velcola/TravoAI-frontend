@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plane, Hotel, Search, MapPin, Calendar, Users } from "lucide-react";
+import { Plane, Hotel, Search, MapPin, Calendar, Users, Sun } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Brain, Clock, Thermometer, Heart } from "lucide-react";
@@ -23,13 +23,33 @@ const Hero = () => {
   const [hotelCheckOut, setHotelCheckOut] = useState("");
   const [hotelGuests, setHotelGuests] = useState(""); // int?
 
+  const [recommendationDepartureLocation, setRecommendationDepartureLocation] = useState("");
+  const [recommendationStartDate, setRecommendationStartDate] = useState("");
+  const [recommendationEndDate, setRecommendationEndDate] = useState("");
+  const [travelMonth, setTravelMonth] = useState("");
+  const [travelStyle, setTravelStyle] = useState("");
+  const [temperaturePreference, setTemperaturePreference] = useState("");
+  const [interests, setInterests] = useState("");
+
   const navigate = useNavigate();
 
   const handleSearch = () => {
+    let queryParams;
+
     if(searchType === "recommendation") {
-      navigate(`/recommendation`);
+      queryParams = new URLSearchParams({
+        departureLocation: recommendationDepartureLocation,
+        startDate: recommendationStartDate,
+        endDate: recommendationEndDate,
+        adults: adults,
+        travelMonth: travelMonth,
+        interests: interests,
+        travelStyle: travelStyle,
+        temperaturePreference: temperaturePreference,
+      });
+
+      navigate(`/recommendation?${queryParams.toString()}`);
     } else {
-      let queryParams;
 
       switch (searchType) {
         case "flights":
@@ -47,23 +67,24 @@ const Hero = () => {
           });
           break;
         case "hotels":
-          if(!hotelDestination || !hotelCheckIn || !hotelCheckOut || !hotelGuests) {
+          if(!hotelDestination) {
             return;
           }
           
           // TODO!!!!!!
           queryParams = new URLSearchParams({
               type: searchType,
-              hotelDestination,
-              hotelCheckIn,
-              hotelCheckOut,
-              hotelGuests,
+              hotelDestination: hotelDestination,
             });
+
           break;
         default:
           return;
       }
   
+      console.log('====================================');
+            console.log(queryParams.toString());
+            console.log('====================================');
       navigate(`/search?${queryParams.toString()}`);
     }
   };
@@ -108,7 +129,7 @@ const Hero = () => {
                 className="rounded-xl data-[state=active]:bg-white data-[state=active]:text-purple-600 data-[state=active]:shadow-md transition-all duration-200"
               >
                 <Brain className="w-4 h-4 mr-2" />
-                Travo Recommendation
+                AI Recommendation
               </TabsTrigger>
             </TabsList>
 
@@ -196,51 +217,18 @@ const Hero = () => {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Check-in</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input 
-                      type="date" 
-                      value={hotelCheckIn}
-                      onChange={(e) => setHotelCheckIn(e.target.value)}
-                      className="pl-10 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Check-out</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input 
-                      type="date" 
-                      value={hotelCheckOut}
-                      onChange={(e) => setHotelCheckOut(e.target.value)}
-                      className="pl-10 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Guests</label>
-                  <div className="relative">
-                    <Users className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input 
-                      placeholder="2 Adults" 
-                      value={hotelGuests}
-                      onChange={(e) => setHotelGuests(e.target.value)}
-                      className="pl-10 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
-                    />
-                  </div>
-                </div>
               </div>
             </TabsContent>
+
             <TabsContent value="recommendation" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Departure Location</label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input 
+                    <Input
+                      value={recommendationDepartureLocation}
+                      onChange={(e) => setRecommendationDepartureLocation(e.target.value)}
                       placeholder="Where are you departing from?" 
                       className="pl-10 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
                     />
@@ -249,18 +237,36 @@ const Hero = () => {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Travel Month</label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Sun className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input 
+                      value={travelMonth}
+                      onChange={(e) => setTravelMonth(e.target.value)}
                       placeholder="e.g., January, March..." 
                       className="pl-10 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Trip Length</label>
+                  <label className="text-sm font-medium text-gray-700">Start Date</label>
                   <div className="relative">
-                    <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input 
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      value={recommendationStartDate}
+                      onChange={(e) => setRecommendationStartDate(e.target.value)}
+                      type="date"
+                      placeholder="e.g., 7 days, 2 weeks..." 
+                      className="pl-10 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">End Date</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      value={recommendationEndDate}
+                      onChange={(e) => setRecommendationEndDate(e.target.value)}
+                      type="date"
                       placeholder="e.g., 7 days, 2 weeks..." 
                       className="pl-10 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
                     />
@@ -270,7 +276,9 @@ const Hero = () => {
                   <label className="text-sm font-medium text-gray-700">Travel Style</label>
                   <div className="relative">
                     <Heart className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input 
+                    <Input
+                      value={travelStyle}
+                      onChange={(e) => setTravelStyle(e.target.value)}
                       placeholder="e.g., romantic, relaxing, adventure..." 
                       className="pl-10 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
                     />
@@ -281,14 +289,31 @@ const Hero = () => {
                   <div className="relative">
                     <Thermometer className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input 
+                      value={temperaturePreference}
+                      onChange={(e) => setTemperaturePreference(e.target.value)}
                       placeholder="warm, cool, or mild" 
+                      className="pl-10 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Adults</label>
+                  <div className="relative">
+                    <Users className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input 
+                      type="number"
+                      value={adults}
+                      onChange={(e) => setAdults(e.target.value)}
+                      placeholder="Number of adults" 
                       className="pl-10 rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200"
                     />
                   </div>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-medium text-gray-700">Interests</label>
-                  <Textarea 
+                  <Textarea
+                    value={interests}
+                    onChange={(e) => setInterests(e.target.value)}
                     placeholder="Tell us about your interests... (e.g., history, food, nightlife, nature, art, shopping)" 
                     className="rounded-xl border-gray-200 focus:border-purple-300 focus:ring-purple-200 min-h-[100px]"
                   />
